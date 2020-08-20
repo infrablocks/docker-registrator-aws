@@ -34,7 +34,7 @@ if [[ -n "$REGISTRATOR_TTL_REFRESH_SECONDS" ]]; then
   echo "==> Expecting registrator to refresh service TTL every '${REGISTRATOR_TTL_REFRESH_SECONDS}' seconds, setting ttl-refresh option..."
 fi
 
-exec /registrator/bin/registrator \
+exec /opt/registrator/bin/registrator \
     "${REGISTRATOR_CLEANUP}" \
     "${REGISTRATOR_RESYNC}" \
     "${REGISTRATOR_TTL}" \
