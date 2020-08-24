@@ -1,8 +1,5 @@
 require 'bundler/setup'
 require 'docker'
-require 'aws-sdk'
-require 'octopoller'
-require 'dotenv'
 require 'serverspec'
 require 'shellwords'
 
