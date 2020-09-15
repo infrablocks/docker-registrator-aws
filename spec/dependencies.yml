@@ -13,3 +13,6 @@ services:
 
   metadata:
     image: amazon/amazon-ec2-metadata-mock:v1.2.0
+
+  consul:
+    image: consul:1.8.4

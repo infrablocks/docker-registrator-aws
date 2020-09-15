@@ -34,6 +34,6 @@ ENV REGISTRATOR_COMMIT_SHA "4322fe00304d6de661865721b073dc5c7e750bd2"
 COPY --from=builder /opt/registrator/bin/registrator /opt/registrator/bin/registrator
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY docker-entrypoint.sh /opt/registrator/bin/docker-entrypoint.sh
+COPY start.sh /opt/registrator/bin/start.sh
 
-ENV STARTUP_SCRIPT_PATH "/opt/registrator/bin/docker-entrypoint.sh"
+ENV STARTUP_SCRIPT_PATH="/opt/registrator/bin/start.sh"
