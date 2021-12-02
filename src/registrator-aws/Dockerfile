@@ -27,7 +27,7 @@ RUN cd /go/src/github.com/gliderlabs/registrator \
       && go build -ldflags "-X main.Version=${REGISTRATOR_COMMIT_SHA}" \
            -o /opt/registrator/bin/registrator
 
-FROM infrablocks/alpine-aws-s3-config:0.20.0
+FROM infrablocks/alpine-aws-s3-config:0.22.0
 
 ENV REGISTRATOR_COMMIT_SHA "4322fe00304d6de661865721b073dc5c7e750bd2"
 
