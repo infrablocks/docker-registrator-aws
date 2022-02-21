@@ -1,8 +1,9 @@
-FROM alpine:3.12 AS builder
+FROM alpine:3.15.0 AS builder
 
 ENV GOPATH "/go"
 ENV PATH "$PATH:/go/bin"
 ENV REGISTRATOR_COMMIT_SHA "4322fe00304d6de661865721b073dc5c7e750bd2"
+ENV GO111MODULE "auto"
 
 RUN apk -v --no-cache add \
       build-base \
