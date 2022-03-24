@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'entrypoint' do
@@ -8,20 +10,20 @@ describe 'entrypoint' do
   s3_env_file_object_path = 's3://bucket/env-file.env'
 
   environment = {
-      'AWS_METADATA_SERVICE_URL' => metadata_service_url,
-      'AWS_ACCESS_KEY_ID' => "...",
-      'AWS_SECRET_ACCESS_KEY' => "...",
-      'AWS_S3_ENDPOINT_URL' => s3_endpoint_url,
-      'AWS_S3_BUCKET_REGION' => s3_bucket_region,
-      'AWS_S3_ENV_FILE_OBJECT_PATH' => s3_env_file_object_path
+    'AWS_METADATA_SERVICE_URL' => metadata_service_url,
+    'AWS_ACCESS_KEY_ID' => '...',
+    'AWS_SECRET_ACCESS_KEY' => '...',
+    'AWS_S3_ENDPOINT_URL' => s3_endpoint_url,
+    'AWS_S3_BUCKET_REGION' => s3_bucket_region,
+    'AWS_S3_ENV_FILE_OBJECT_PATH' => s3_env_file_object_path
   }
   image = 'registrator-aws:latest'
   extra = {
-      'Entrypoint' => '/bin/sh',
-      'HostConfig' => {
-          'Binds' => ["/var/run/docker.sock:/tmp/docker.sock"],
-          'NetworkMode' => 'docker_registrator_aws_test_default'
-      }
+    'Entrypoint' => '/bin/sh',
+    'HostConfig' => {
+      'Binds' => ['/var/run/docker.sock:/tmp/docker.sock'],
+      'NetworkMode' => 'docker_registrator_aws_test_default'
+    }
   }
 
   before(:all) do
@@ -34,16 +36,18 @@ describe 'entrypoint' do
   describe 'by default' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
@@ -54,177 +58,189 @@ describe 'entrypoint' do
 
     it 'does not cleanup' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .not_to(match(/-cleanup/))
+        .not_to(match(/-cleanup/))
     end
 
     it 'always deregisters' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-deregister always/))
+        .to(match(/-deregister always/))
     end
 
     it 'never resyncs' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-resync 0/))
+        .to(match(/-resync 0/))
     end
 
     it 'does not set a TTL' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-ttl 0/))
+        .to(match(/-ttl 0/))
     end
 
     it 'does not set a TTL refresh frequency' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .not_to(match(/-ttl-refresh/))
+        .not_to(match(/-ttl-refresh/))
     end
   end
 
   describe 'with cleanup enabled' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500",
-              "REGISTRATOR_CLEANUP_ENABLED" => "yes"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500',
+          'REGISTRATOR_CLEANUP_ENABLED' => 'yes'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
 
     it 'cleans up' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-cleanup/))
+        .to(match(/-cleanup/))
     end
   end
 
   describe 'with cleanup disabled' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500",
-              "REGISTRATOR_CLEANUP_ENABLED" => "no"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500',
+          'REGISTRATOR_CLEANUP_ENABLED' => 'no'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
 
     it 'cleans up' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .not_to(match(/-cleanup/))
+        .not_to(match(/-cleanup/))
     end
   end
 
   describe 'with deregister on-success' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500",
-              "REGISTRATOR_DEREGISTER_MODE" => "on-success"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500',
+          'REGISTRATOR_DEREGISTER_MODE' => 'on-success'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
 
     it 'uses on-success as deregister mode' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-deregister on-success/))
+        .to(match(/-deregister on-success/))
     end
   end
 
   describe 'with deregister always' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500",
-              "REGISTRATOR_DEREGISTER_MODE" => "always"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500',
+          'REGISTRATOR_DEREGISTER_MODE' => 'always'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
 
     it 'uses on-success as deregister mode' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-deregister always/))
+        .to(match(/-deregister always/))
     end
   end
 
   describe 'with resync configuration' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500",
-              "REGISTRATOR_RESYNC_SECONDS" => "5"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500',
+          'REGISTRATOR_RESYNC_SECONDS' => '5'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
 
     it 'uses the provided resync seconds' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-resync 5/))
+        .to(match(/-resync 5/))
     end
   end
 
   describe 'with ttl configuration' do
     before(:all) do
       create_env_file(
-          endpoint_url: s3_endpoint_url,
-          region: s3_bucket_region,
-          bucket_path: s3_bucket_path,
-          object_path: s3_env_file_object_path,
-          env: {
-              "REGISTRATOR_REGISTRY_URI" => "consul://consul:8500",
-              "REGISTRATOR_TTL_SECONDS" => "30",
-              "REGISTRATOR_TTL_REFRESH_SECONDS" => "10"
-          })
+        endpoint_url: s3_endpoint_url,
+        region: s3_bucket_region,
+        bucket_path: s3_bucket_path,
+        object_path: s3_env_file_object_path,
+        env: {
+          'REGISTRATOR_REGISTRY_URI' => 'consul://consul:8500',
+          'REGISTRATOR_TTL_SECONDS' => '30',
+          'REGISTRATOR_TTL_REFRESH_SECONDS' => '10'
+        }
+      )
 
       execute_docker_entrypoint(
-          started_indicator: "Syncing")
+        started_indicator: 'Syncing'
+      )
     end
 
     after(:all, &:reset_docker_backend)
 
     it 'uses the provided ttl seconds' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-ttl 30/))
+        .to(match(/-ttl 30/))
     end
 
     it 'uses the provided ttl refresh seconds' do
       expect(process('/opt/registrator/bin/registrator').args)
-          .to(match(/-ttl-refresh 10/))
+        .to(match(/-ttl-refresh 10/))
     end
   end
 
