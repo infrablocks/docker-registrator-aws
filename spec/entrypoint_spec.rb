@@ -234,58 +234,70 @@ describe 'entrypoint' do
   end
 
   def create_env_file(opts)
-    create_object(opts
-        .merge(content: (opts[:env] || {})
-            .to_a
-            .collect { |item| " #{item[0]}=\"#{item[1]}\"" }
-            .join("\n")))
+    create_object(
+      opts
+        .merge(
+          content: (opts[:env] || {})
+                     .to_a
+                     .collect { |item| " #{item[0]}=\"#{item[1]}\"" }
+                     .join("\n")
+        )
+    )
   end
 
   def execute_command(command_string)
     command = command(command_string)
     exit_status = command.exit_status
     unless exit_status == 0
-      raise RuntimeError,
-          "\"#{command_string}\" failed with exit code: #{exit_status}"
+      raise "\"#{command_string}\" failed with exit code: #{exit_status}"
     end
+
     command
   end
 
+  def make_bucket(opts)
+    execute_command('aws ' \
+                    "--endpoint-url #{opts[:endpoint_url]} " \
+                    's3 ' \
+                    'mb ' \
+                    "#{opts[:bucket_path]} " \
+                    "--region \"#{opts[:region]}\"")
+  end
+
+  def copy_object(opts)
+    execute_command("echo -n #{Shellwords.escape(opts[:content])} | " \
+                    'aws ' \
+                    "--endpoint-url #{opts[:endpoint_url]} " \
+                    's3 ' \
+                    'cp ' \
+                    '- ' \
+                    "#{opts[:object_path]} " \
+                    "--region \"#{opts[:region]}\" " \
+                    '--sse AES256')
+  end
+
   def create_object(opts)
-    execute_command('aws ' +
-        "--endpoint-url #{opts[:endpoint_url]} " +
-        's3 ' +
-        'mb ' +
-        "#{opts[:bucket_path]} " +
-        "--region \"#{opts[:region]}\"")
-    execute_command("echo -n #{Shellwords.escape(opts[:content])} | " +
-        'aws ' +
-        "--endpoint-url #{opts[:endpoint_url]} " +
-        's3 ' +
-        'cp ' +
-        '- ' +
-        "#{opts[:object_path]} " +
-        "--region \"#{opts[:region]}\" " +
-        '--sse AES256')
+    make_bucket(opts)
+    copy_object(opts)
+  end
+
+  def wait_for_contents(file, content)
+    Octopoller.poll(timeout: 30) do
+      docker_entrypoint_log = command("cat #{file}").stdout
+      docker_entrypoint_log =~ /#{content}/ ? docker_entrypoint_log : :re_poll
+    end
+  rescue Octopoller::TimeoutError => e
+    puts command("cat #{file}").stdout
+    raise e
   end
 
   def execute_docker_entrypoint(opts)
-    logfile_path = '/tmp/docker-entrypoint.log'
     args = (opts[:arguments] || []).join(' ')
+    logfile_path = '/tmp/docker-entrypoint.log'
+    start_command = "docker-entrypoint.sh #{args} > #{logfile_path} 2>&1 &"
+    started_indicator = opts[:started_indicator]
 
-    execute_command(
-        "docker-entrypoint.sh #{args} > #{logfile_path} 2>&1 &")
-
-    begin
-      Octopoller.poll(timeout: 15) do
-        docker_entrypoint_log = command("cat #{logfile_path}").stdout
-        docker_entrypoint_log =~ /#{opts[:started_indicator]}/ ?
-            docker_entrypoint_log :
-            :re_poll
-      end
-    rescue Octopoller::TimeoutError => e
-      puts command("cat #{logfile_path}").stdout
-      raise e
-    end
+    execute_command(start_command)
+    wait_for_contents(logfile_path, started_indicator)
   end
 end
