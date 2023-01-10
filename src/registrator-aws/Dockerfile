@@ -1,4 +1,4 @@
-FROM alpine:3.17.0 AS builder
+FROM alpine:3.17.1 AS builder
 
 ENV GOPATH "/go"
 ENV PATH "$PATH:/go/bin"
