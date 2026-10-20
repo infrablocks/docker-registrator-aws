@@ -7,7 +7,7 @@ describe 'commands' do
     set :backend, :docker
     set :docker_image, 'registrator-aws:latest'
     set :docker_container_create_options, {
-      'Entrypoint' => '/bin/sh'
+      'Entrypoint' => ['/bin/sh']
     }
   end
 
