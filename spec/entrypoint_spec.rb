@@ -19,7 +19,7 @@ describe 'entrypoint' do
   }
   image = 'registrator-aws:latest'
   extra = {
-    'Entrypoint' => '/bin/sh',
+    'Entrypoint' => ['/bin/sh'],
     'HostConfig' => {
       'Binds' => ['/var/run/docker.sock:/tmp/docker.sock'],
       'NetworkMode' => 'docker_registrator_aws_test_default'
